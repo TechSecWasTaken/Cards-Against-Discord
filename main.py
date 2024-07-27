@@ -12,7 +12,8 @@ messages = []
 old_prompt = ""
 hourLength = 3
 winner = None
-pingRoleID = 0
+pingRoleID = 1266708701763342437
+ownerID = os.getenv("OWNER_ID")
 
 @bot.event
 async def on_ready():
@@ -41,7 +42,7 @@ async def hold(ctx):
 
     if pingRoleID > 0:
         msg = await ctx.send(f"<@&{pingRoleID}>\n"+prompt)
-
+        
     thread = await msg.create_thread(name="Game Responses")
     thread_id = thread.id
     await thread.edit(
@@ -92,7 +93,7 @@ async def before_timer():
 
 @bot.slash_command()
 async def start(ctx):
-    if ctx.author.id == 891102358858244096:
+    if ctx.author.id == int(ownerID):
         hold.start(ctx=ctx)
 
 bot.run(DISCORD_TOKEN)
