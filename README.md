@@ -19,6 +19,7 @@ This is so the bot can actually do stuff.
 Now, go to the source code and go to the .env file.
 You're going to want to change some variables, such as making sure that "DISCORD_TOKEN" is your bot's token.
 And you want to change "OWNER_ID" with your Discord ID so you can be the only one to start the bot.
+Last, make sure to change the "ROLE_ID" with what role you want to ping with. If you don't want to ping anyone, then just set it to 0.
 
 Once finished, go to where you downloaded the source code and go to your terminal.
 Run these commands:
