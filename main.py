@@ -42,6 +42,8 @@ async def hold(ctx):
 
     if pingRoleID > 0:
         msg = await ctx.send(f"<@&{pingRoleID}>\n"+prompt)
+    else:
+        msg = await ctx.send(prompt)
         
     thread = await msg.create_thread(name="Game Responses")
     thread_id = thread.id
