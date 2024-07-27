@@ -1,5 +1,6 @@
 import discord
 import os
+import re
 import asyncio
 import random
 from discord.ext import tasks
@@ -7,17 +8,26 @@ from discord.ext import tasks
 DISCORD_TOKEN = os.getenv("DISCORD_TOKEN")
 bot = discord.Bot(intents=discord.Intents.all())
 
+interactions = discord.Interaction
+
 thread_id = None
 messages = []
 old_prompt = ""
 hourLength = 3
 winner = None
-pingRoleID = 1266708701763342437
-ownerID = os.getenv("OWNER_ID")
+pingRoleID = int(re.search(r'\d+', os.getenv("ROLE_ID")).group())
+ownerID = int(re.search(r'\d+', os.getenv("OWNER_ID")).group())
+channel_id = 0
 
 @bot.event
 async def on_ready():
     print(f"Signed in as {bot.user}")
+
+@bot.event
+async def on_message_delete(ctx):
+    for msg in range(len(messages) - 1):
+        if messages[msg] == ctx.id:
+            messages.pop(msg)
 
 @bot.event
 async def on_message(ctx):
@@ -56,35 +66,37 @@ async def hold(ctx):
     global messages
     global winner
 
-    await thread.edit(
-        archived = True,
-        locked = True,
-        slowmode_delay = (21600)
-    )
-
     print("Timer ended")
     for msg in messages:
         if winner == None: 
             winner = msg
             print(winner)
 
-        if bot.get_message(msg) == None:
-            return
-
-        if bot.get_message(msg).reactions[0].count > bot.get_message(winner).reactions[0].count:
-            print(winner)
-            winner = msg
+        if bot.get_message(msg) != None:
+            if bot.get_message(msg).reactions[0].count > bot.get_message(winner).reactions[0].count:
+                print(winner + " cur winner")
+                winner = msg
+            else:
+                print("loser")
+                pass
         else:
-            print("loser")
-            pass
+            print(f"{msg} doesn't exist.")
 
     thread_id = None
     messages = []
+
+    channel = channel_id # Caching channel id.
 
     if not winner == None:
         await ctx.send(f'The winner is: <@{bot.get_message(winner).author.id}>!\n\nAnd their message was:\n"{bot.get_message(winner).content}"')
     else:
         await ctx.send(f'There was no winner.')
+
+    await thread.edit(
+        archived = True,
+        locked = True,
+        slowmode_delay = (21600)
+    )
 
     winner = None
 
@@ -93,9 +105,37 @@ async def before_timer():
     print("wait...")
     await bot.wait_until_ready()
 
-@bot.slash_command()
+@bot.slash_command(name="start")
 async def start(ctx):
     if ctx.author.id == int(ownerID):
+        await ctx.respond("Bot started!")
         hold.start(ctx=ctx)
+        channel_id = bot.get_channel(ctx.channel.id)
+
+@bot.slash_command(name="howtoplay")
+async def howtoplay(ctx):
+    embed = discord.Embed(
+        title="How to Play!",
+        description="How the bot works!",
+        color = discord.Color.blurple()
+    )
+
+    embed.set_author(
+        name="NotTechSec",
+        icon_url="https://cdn.discordapp.com/avatars/891102358858244096/099fc08c380ceb0c610f1dded273d343?size=1024",
+        url="https://twitter.com/NotTechSec" # fuck X. It's twitter.
+    )
+
+    embed.add_field(
+        name="Rules",
+        value=f"Every {hourLength} hours the bot will send a message, and the message will contain a prompt. Your job is to go to the 'Game Responses' thread and come up with a funny answer! Funniest answers win. How can you vote for a funny answer? React to the pink heart!",
+        inline=True
+    )
+
+    embed.set_footer(text="Programmed by NotTechSec on Twitter!")
+
+    user = await bot.fetch_user(ctx.author.id)
+    await user.send(embed=embed)
+    await ctx.respond("Rules sent in DMs!")
 
 bot.run(DISCORD_TOKEN)
